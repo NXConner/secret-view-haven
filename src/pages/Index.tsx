@@ -7,6 +7,7 @@ import { UploadDropzone } from '@/components/UploadDropzone';
 import { SearchBar } from '@/components/SearchBar';
 import { Menu, X } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
+import WallpaperControls from '@/components/WallpaperControls';
 
 export interface MediaItem {
   id: string;
@@ -173,6 +174,8 @@ const Index = () => {
         {/* Main Content */}
         <main className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
           <div className="p-6">
+            {/* Wallpaper Controls */}
+            <WallpaperControls value={wallpaper} onChange={setWallpaper} />
             {/* Upload Dropzone */}
             <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} />
             
