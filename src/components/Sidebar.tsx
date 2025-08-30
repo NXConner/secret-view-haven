@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Folder, Upload, Star, Clock, Settings, Shield } from 'lucide-react';
+import { Folder, Upload, Star, Clock, Settings, Shield, Trash2 } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface SidebarProps {
   selectedCollection: string;
   onCollectionChange: (collection: string) => void;
   onUpload: () => void;
+  onClearWallpaper?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -49,6 +50,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Upload size={20} />
           <span className="font-medium">Upload Media</span>
         </button>
+
+        {/* Wallpaper Controls */}
+        {onClearWallpaper && (
+          <button
+            onClick={onClearWallpaper}
+            className="w-full flex items-center gap-3 p-3 bg-gray-700/60 hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <Trash2 size={18} />
+            <span className="font-medium">Clear Wallpaper</span>
+          </button>
+        )}
 
         {/* Collections */}
         <div>
