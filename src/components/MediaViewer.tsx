@@ -1,16 +1,17 @@
 
 import React, { useEffect } from 'react';
 import { MediaItem } from '@/pages/Index';
-import { X, ChevronLeft, ChevronRight, Download, Share, Heart } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Download, Share, Heart, Image } from 'lucide-react';
 
 interface MediaViewerProps {
   media: MediaItem;
   onClose: () => void;
   onNext: () => void;
   onPrevious: () => void;
+  onSetWallpaper?: () => void;
 }
 
-export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext, onPrevious }) => {
+export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext, onPrevious, onSetWallpaper }) => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -43,6 +44,15 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext
         <button className="p-3 bg-black/60 hover:bg-black/80 rounded-full transition-colors">
           <Share size={20} className="text-white" />
         </button>
+        {onSetWallpaper && (
+          <button
+            onClick={onSetWallpaper}
+            className="p-3 bg-black/60 hover:bg-black/80 rounded-full transition-colors"
+            title="Set as Wallpaper"
+          >
+            <Image size={20} className="text-white" />
+          </button>
+        )}
         <button className="p-3 bg-black/60 hover:bg-black/80 rounded-full transition-colors">
           <Download size={20} className="text-white" />
         </button>

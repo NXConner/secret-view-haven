@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { UploadDropzone } from '@/components/UploadDropzone';
 import { SearchBar } from '@/components/SearchBar';
 import { Menu, X } from 'lucide-react';
+import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
 
 export interface MediaItem {
   id: string;
@@ -26,6 +27,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [wallpaper, setWallpaper] = useState<WallpaperConfig | null>(null);
 
   // Mock data for demo purposes
   useEffect(() => {
@@ -67,6 +69,30 @@ const Index = () => {
     setMediaItems(mockData);
   }, []);
 
+  // Load wallpaper from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('wallpaperConfig');
+      if (saved) {
+        const parsed: WallpaperConfig = JSON.parse(saved);
+        if (parsed && parsed.url && (parsed.type === 'image' || parsed.type === 'video')) {
+          setWallpaper(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Persist wallpaper to localStorage
+  useEffect(() => {
+    try {
+      if (wallpaper) {
+        localStorage.setItem('wallpaperConfig', JSON.stringify(wallpaper));
+      } else {
+        localStorage.removeItem('wallpaperConfig');
+      }
+    } catch {}
+  }, [wallpaper]);
+
   const filteredMedia = mediaItems.filter(item => {
     const matchesCollection = selectedCollection === 'all' || item.collection === selectedCollection;
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,8 +122,25 @@ const Index = () => {
     }, 2000);
   };
 
+  const handleSetWallpaper = (media: MediaItem) => {
+    const config: WallpaperConfig = {
+      type: media.type,
+      url: media.url,
+      objectFit: 'cover',
+      opacity: 1,
+      blurPx: 0,
+      brightness: 1,
+      muted: true,
+      loop: true,
+    };
+    setWallpaper(config);
+  };
+
+  const handleClearWallpaper = () => setWallpaper(null);
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white relative">
+      <BackgroundWallpaper wallpaper={wallpaper} />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div className="flex items-center justify-between p-4">
@@ -124,6 +167,7 @@ const Index = () => {
           selectedCollection={selectedCollection}
           onCollectionChange={setSelectedCollection}
           onUpload={() => document.getElementById('file-upload')?.click()}
+          onClearWallpaper={handleClearWallpaper}
         />
 
         {/* Main Content */}
@@ -156,6 +200,7 @@ const Index = () => {
             const prevIndex = (currentIndex - 1 + filteredMedia.length) % filteredMedia.length;
             setSelectedMedia(filteredMedia[prevIndex]);
           }}
+          onSetWallpaper={() => handleSetWallpaper(selectedMedia)}
         />
       )}
 
