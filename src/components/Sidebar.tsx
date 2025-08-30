@@ -16,7 +16,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   collections,
   selectedCollection,
   onCollectionChange,
-  onUpload
+  onUpload,
+  onClearWallpaper
 }) => {
   const getCollectionIcon = (collection: string) => {
     switch (collection) {
