@@ -5,7 +5,7 @@ import { MediaViewer } from '@/components/MediaViewer';
 import { Sidebar } from '@/components/Sidebar';
 import { UploadDropzone } from '@/components/UploadDropzone';
 import { SearchBar } from '@/components/SearchBar';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
 import WallpaperControls from '@/components/WallpaperControls';
 
@@ -29,6 +29,7 @@ const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [wallpaper, setWallpaper] = useState<WallpaperConfig | null>(null);
+  const [showWallpaperControls, setShowWallpaperControls] = useState(false);
 
   // Mock data for demo purposes
   useEffect(() => {
@@ -174,8 +175,24 @@ const Index = () => {
         {/* Main Content */}
         <main className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
           <div className="p-6">
-            {/* Wallpaper Controls */}
-            <WallpaperControls value={wallpaper} onChange={setWallpaper} />
+            {/* Wallpaper Controls (collapsible) */}
+            {wallpaper && (
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowWallpaperControls(!showWallpaperControls)}
+                  className="flex items-center gap-2 rounded-md border border-gray-700 bg-gray-800/70 px-3 py-2 hover:bg-gray-800"
+                >
+                  <Settings2 size={16} />
+                  <span className="text-sm">Wallpaper settings</span>
+                  {showWallpaperControls ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />}
+                </button>
+                {showWallpaperControls && (
+                  <div className="mt-3">
+                    <WallpaperControls value={wallpaper} onChange={setWallpaper} />
+                  </div>
+                )}
+              </div>
+            )}
             {/* Upload Dropzone */}
             <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} />
             
