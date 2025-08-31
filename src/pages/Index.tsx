@@ -12,6 +12,7 @@ import { usePinLock } from '@/hooks/usePinLock'
 import PinLock from '@/components/PinLock'
 import { encryptBlob, decryptToBlob } from '@/lib/crypto'
 import WallpaperControls from '@/components/WallpaperControls';
+import { hapticImpact } from '@/lib/native'
 
 export interface MediaItem {
   id: string;
@@ -197,6 +198,7 @@ const Index = () => {
       muted: true,
       loop: true,
     };
+    hapticImpact();
     setWallpaper(config);
   };
 
@@ -211,6 +213,7 @@ const Index = () => {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <button
+              aria-label="Toggle sidebar"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
             >
@@ -231,7 +234,7 @@ const Index = () => {
           collections={collections}
           selectedCollection={selectedCollection}
           onCollectionChange={setSelectedCollection}
-          onUpload={() => document.getElementById('file-upload')?.click()}
+          onUpload={() => { hapticImpact(); document.getElementById('file-upload')?.click() }}
           onClearWallpaper={handleClearWallpaper}
         />
 

@@ -57,6 +57,10 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({ onFileUpload, is
           : 'border-gray-600 bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800/70'
       }`}
       onClick={() => document.getElementById('file-upload')?.click()}
+      role="button"
+      tabIndex={0}
+      aria-label="Upload media files"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.getElementById('file-upload')?.click() } }}
     >
       <div className="text-center">
         <div className={`mx-auto mb-4 transition-transform duration-300 ${isDragging ? 'scale-110' : ''}`}>

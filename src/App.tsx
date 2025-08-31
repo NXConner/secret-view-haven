@@ -5,11 +5,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ErrorBoundary from '@/components/ErrorBoundary'
+import React from 'react'
+import { setStatusBarDark } from '@/lib/native'
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  React.useEffect(() => { setStatusBarDark() }, [])
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -25,6 +29,6 @@ const App = () => (
       </ErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
-);
+)}
 
 export default App;

@@ -53,7 +53,7 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={media.title}>
       {/* Background overlay */}
       <div className="absolute inset-0" onClick={onClose} />
       

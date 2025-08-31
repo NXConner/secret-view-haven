@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
       <div className="p-4 space-y-4">
         {/* Upload Button */}
         <button
+          aria-label="Upload media"
           onClick={onUpload}
           className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg transition-all duration-200 transform hover:scale-105"
         >
@@ -56,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
         {/* Wallpaper Controls */}
         {typeof onClearWallpaper === 'function' && (
           <button
+            aria-label="Clear wallpaper"
             onClick={onClearWallpaper}
             className="w-full flex items-center gap-3 p-3 bg-gray-700/60 hover:bg-gray-700 rounded-lg transition-colors"
           >
@@ -78,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
                 <button
                   key={collection}
                   onClick={() => onCollectionChange(collection)}
+                  aria-pressed={isSelected}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
                     isSelected
                       ? 'bg-purple-600/30 text-purple-300 border border-purple-500/50'
