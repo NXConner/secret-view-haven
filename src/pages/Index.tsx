@@ -284,6 +284,14 @@ const Index = () => {
             setSelectedMedia(filteredMedia[prevIndex]);
           }}
           onSetWallpaper={() => handleSetWallpaper(selectedMedia)}
+          onUpdateMeta={async ({ id, title, collection, tags }) => {
+            setMediaItems(prev => prev.map(m => m.id === id ? { ...m, title: title ?? m.title, collection: collection ?? m.collection, tags: tags ?? m.tags } : m))
+            const rec = await db.media.get(id)
+            if (rec) {
+              await db.media.update(id, { title: title ?? rec.title, collection: collection ?? rec.collection, tags: tags ?? rec.tags })
+            }
+            setSelectedMedia(s => s && s.id === id ? { ...s, title: title ?? s.title, collection: collection ?? s.collection, tags: tags ?? s.tags } : s)
+          }}
         />
       )}
 
