@@ -18,7 +18,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
     selectedCollection,
     onCollectionChange,
     onUpload,
-    onClearWallpaper,
   } = props;
   const getCollectionIcon = (collection: string) => {
     switch (collection) {
@@ -55,10 +54,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
         </button>
 
         {/* Wallpaper Controls */}
-        {typeof onClearWallpaper === 'function' && (
+        {typeof props.onClearWallpaper === 'function' && (
           <button
             aria-label="Clear wallpaper"
-            onClick={onClearWallpaper}
+            onClick={props.onClearWallpaper}
             className="w-full flex items-center gap-3 p-3 bg-gray-700/60 hover:bg-gray-700 rounded-lg transition-colors"
           >
             <Trash2 size={18} />
