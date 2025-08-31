@@ -8,6 +8,11 @@ import { Menu, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
 const MediaViewer = lazy(() => import('@/components/MediaViewer').then(m => ({ default: m.MediaViewer })));
 const WallpaperControls = lazy(() => import('@/components/WallpaperControls'));
+import { db, type MediaRecord } from '@/lib/db'
+import { usePinLock } from '@/hooks/usePinLock'
+import PinLock from '@/components/PinLock'
+import { encryptBlob, decryptToBlob } from '@/lib/crypto'
+import { hapticImpact } from '@/lib/native'
 
 export interface MediaItem {
   id: string;
@@ -28,48 +33,64 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [wallpaper, setWallpaper] = useState<WallpaperConfig | null>(null);
   const [showWallpaperControls, setShowWallpaperControls] = useState(false);
+  const pin = usePinLock()
 
-  // Mock data for demo purposes
+  // Initial load: hydrate from IndexedDB; if empty, seed with mock data once
   useEffect(() => {
-    const mockData: MediaItem[] = [
-      {
-        id: '1',
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=1200&q=80',
-        thumbnail: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=400&q=80',
-        title: 'Personal Photo 1',
-        collection: 'favorites',
-        tags: ['personal', 'private'],
-        uploadDate: new Date(),
-        size: 2048000
-      },
-      {
-        id: '2',
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80',
-        thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80',
-        title: 'Personal Photo 2',
-        collection: 'recent',
-        tags: ['personal', 'work'],
-        uploadDate: new Date(),
-        size: 1536000
-      },
-      {
-        id: '3',
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=1200&q=80',
-        thumbnail: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=400&q=80',
-        title: 'Personal Photo 3',
-        collection: 'favorites',
-        tags: ['personal', 'home'],
-        uploadDate: new Date(),
-        size: 1824000
+    const load = async () => {
+      const records = await db.media.toArray()
+      if (records.length === 0) {
+        const seed: MediaRecord[] = [
+          {
+            id: 'seed-1',
+            type: 'image',
+            url: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=1200&q=80',
+            thumbnail: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=400&q=80',
+            title: 'Personal Photo 1',
+            collection: 'favorites',
+            tags: ['personal', 'private'],
+            uploadDate: Date.now(),
+            size: 2048000,
+          },
+          {
+            id: 'seed-2',
+            type: 'image',
+            url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80',
+            thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80',
+            title: 'Personal Photo 2',
+            collection: 'recent',
+            tags: ['personal', 'work'],
+            uploadDate: Date.now(),
+            size: 1536000,
+          },
+        ]
+        await db.media.bulkPut(seed)
+        const loaded = seed.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
+        setMediaItems(loaded)
+      } else {
+        // If encrypted, attempt to decrypt only when unlocked; otherwise skip showing those items
+        const loaded: MediaItem[] = []
+        for (const r of records) {
+          try {
+            if (r.encIvHex && r.encData && r.encMimeType) {
+              if (!pin.key) continue
+              const blob = await decryptToBlob(r.encIvHex, r.encData, pin.key, r.encMimeType)
+              const url = URL.createObjectURL(blob)
+              loaded.push({ ...r, url, thumbnail: url, uploadDate: new Date(r.uploadDate) } as unknown as MediaItem)
+            } else {
+              loaded.push({ ...r, uploadDate: new Date(r.uploadDate) } as unknown as MediaItem)
+            }
+          } catch { /* ignore corrupt entries */ }
+        }
+        setMediaItems(loaded)
       }
-    ];
-    setMediaItems(mockData);
-  }, []);
+    }
+    load()
+  }, [pin.key])
 
   // Load wallpaper from localStorage
   useEffect(() => {
@@ -106,24 +127,66 @@ const Index = () => {
 
   const collections = useMemo(() => ['all', ...Array.from(new Set(mediaItems.map(item => item.collection)))], [mediaItems]);
 
-  const handleFileUpload = (files: FileList) => {
+  const handleFileUpload = async (files: FileList) => {
     setIsUploading(true);
-    // Simulate upload process
-    setTimeout(() => {
-      const newItems: MediaItem[] = Array.from(files).map((file, index) => ({
-        id: `upload-${Date.now()}-${index}`,
-        type: file.type.startsWith('video/') ? 'video' : 'image',
-        url: URL.createObjectURL(file),
-        thumbnail: URL.createObjectURL(file),
-        title: file.name,
-        collection: 'recent',
-        tags: ['uploaded'],
-        uploadDate: new Date(),
-        size: file.size
-      }));
-      setMediaItems(prev => [...newItems, ...prev]);
-      setIsUploading(false);
-    }, 2000);
+    setUploadError(null);
+    setUploadProgress(0);
+    try {
+      const now = Date.now()
+      const list = Array.from(files)
+      const total = list.length
+      const records: MediaRecord[] = []
+      for (let index = 0; index < list.length; index++) {
+        const file = list[index]
+        const id = `upload-${now}-${index}`
+        const type = file.type.startsWith('video/') ? 'video' : 'image'
+        let url = ''
+        let thumbnail = ''
+        const createUrl = () => URL.createObjectURL(file)
+        if (pin.key) {
+          const { ivHex, data, mimeType } = await encryptBlob(file, pin.key)
+          await db.media.put({
+            id,
+            type,
+            url: '',
+            thumbnail: '',
+            title: file.name,
+            collection: 'recent',
+            tags: ['uploaded'],
+            uploadDate: now,
+            size: file.size,
+            encIvHex: ivHex,
+            encData: data,
+            encMimeType: mimeType,
+          })
+          const blob = await decryptToBlob(ivHex, data, pin.key, mimeType)
+          url = URL.createObjectURL(blob)
+          thumbnail = url
+        } else {
+          url = createUrl()
+          thumbnail = createUrl()
+          await db.media.put({
+            id,
+            type,
+            url,
+            thumbnail,
+            title: file.name,
+            collection: 'recent',
+            tags: ['uploaded'],
+            uploadDate: now,
+            size: file.size,
+          })
+        }
+        records.push({ id, type, url, thumbnail, title: file.name, collection: 'recent', tags: ['uploaded'], uploadDate: now, size: file.size })
+        setUploadProgress(Math.round(((index + 1) / total) * 100))
+      }
+      // Simulate per-file progress for UX
+      const toItems: MediaItem[] = records.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
+      setMediaItems(prev => [...toItems, ...prev])
+    } finally {
+      setIsUploading(false)
+      setTimeout(() => setUploadProgress(undefined), 500)
+    }
   };
 
   const handleSetWallpaper = (media: MediaItem) => {
@@ -137,6 +200,7 @@ const Index = () => {
       muted: true,
       loop: true,
     };
+    hapticImpact();
     setWallpaper(config);
   };
 
@@ -144,12 +208,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-white relative">
+      <PinLock />
       <BackgroundWallpaper wallpaper={wallpaper} />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <button
+              aria-label="Toggle sidebar"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
             >
@@ -170,7 +236,7 @@ const Index = () => {
           collections={collections}
           selectedCollection={selectedCollection}
           onCollectionChange={setSelectedCollection}
-          onUpload={() => document.getElementById('file-upload')?.click()}
+          onUpload={() => { hapticImpact(); document.getElementById('file-upload')?.click() }}
           onClearWallpaper={handleClearWallpaper}
         />
 
@@ -198,7 +264,7 @@ const Index = () => {
               </div>
             )}
             {/* Upload Dropzone */}
-            <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} />
+            <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} progress={uploadProgress} error={uploadError} />
             
             {/* Media Gallery */}
             <MediaGallery
@@ -226,6 +292,14 @@ const Index = () => {
               setSelectedMedia(filteredMedia[prevIndex]);
             }}
             onSetWallpaper={() => handleSetWallpaper(selectedMedia)}
+            onUpdateMeta={async ({ id, title, collection, tags }) => {
+              setMediaItems(prev => prev.map(m => m.id === id ? { ...m, title: title ?? m.title, collection: collection ?? m.collection, tags: tags ?? m.tags } : m))
+              const rec = await db.media.get(id)
+              if (rec) {
+                await db.media.update(id, { title: title ?? rec.title, collection: collection ?? rec.collection, tags: tags ?? rec.tags })
+              }
+              setSelectedMedia(s => s && s.id === id ? { ...s, title: title ?? s.title, collection: collection ?? s.collection, tags: tags ?? s.tags } : s)
+            }}
           />
         </Suspense>
       )}

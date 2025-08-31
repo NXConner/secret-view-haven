@@ -60,6 +60,16 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Features
+
+- Private media vault with image/video wallpaper background
+- Upload images/videos with progress indicator; persisted in IndexedDB (Dexie)
+- Optional PIN lock with session timeout; AES-GCM encryption of stored media
+- Media gallery with search, collections, tags, and metadata editing
+- Fullscreen media viewer with keyboard navigation and set-as-wallpaper
+- Global error boundary; accessible controls; Android StatusBar/Haptics
+- Tests (Vitest + RTL) with coverage; CI via GitHub Actions
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/ac7974d2-cc41-45d2-a989-7d36cdf8d72d) and click on Share -> Publish.

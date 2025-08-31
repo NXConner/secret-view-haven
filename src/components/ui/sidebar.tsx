@@ -1,4 +1,7 @@
-import * as React from "react"
+// NOTE: This UI sidebar implementation is unused in the app and was retained
+// by scaffolding. Consolidating to the app-specific Sidebar component.
+// This file is intentionally left empty to avoid duplicate sidebar systems.
+export {}
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"

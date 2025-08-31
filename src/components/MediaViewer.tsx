@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import { buildSrcSet } from '@/lib/image';
 import { MediaItem } from '@/pages/Index';
 import { X, ChevronLeft, ChevronRight, Download, Share, Heart, Image } from 'lucide-react';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface MediaViewerProps {
   media: MediaItem;
@@ -10,9 +12,10 @@ interface MediaViewerProps {
   onNext: () => void;
   onPrevious: () => void;
   onSetWallpaper?: () => void;
+  onUpdateMeta?: (update: { id: string; title?: string; collection?: string; tags?: string[] }) => void;
 }
 
-export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext, onPrevious, onSetWallpaper }) => {
+export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext, onPrevious, onSetWallpaper, onUpdateMeta }) => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -32,8 +35,26 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [onClose, onNext, onPrevious]);
 
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [title, setTitle] = React.useState(media.title)
+  const [collection, setCollection] = React.useState(media.collection)
+  const [tags, setTags] = React.useState(media.tags.join(', '))
+
+  useEffect(() => {
+    setTitle(media.title)
+    setCollection(media.collection)
+    setTags(media.tags.join(', '))
+  }, [media])
+
+  const submitEdit = () => {
+    if (!onUpdateMeta) return
+    const parsedTags = tags.split(',').map(t => t.trim()).filter(Boolean)
+    onUpdateMeta({ id: media.id, title: title.trim() || media.title, collection: collection.trim() || 'recent', tags: parsedTags })
+    setIsEditing(false)
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center" role="dialog" aria-modal="true" aria-label={media.title}>
       {/* Background overlay */}
       <div className="absolute inset-0" onClick={onClose} />
       
@@ -45,6 +66,15 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext
         <button className="p-3 bg-black/60 hover:bg-black/80 rounded-full transition-colors">
           <Share size={20} className="text-white" />
         </button>
+        {onUpdateMeta && (
+          <button
+            onClick={() => setIsEditing((v) => !v)}
+            className="p-3 bg-black/60 hover:bg-black/80 rounded-full transition-colors"
+            title={isEditing ? 'Close Editor' : 'Edit Metadata'}
+          >
+            <span className="text-white text-sm">{isEditing ? 'Done' : 'Edit'}</span>
+          </button>
+        )}
         {onSetWallpaper && (
           <button
             onClick={onSetWallpaper}
@@ -105,23 +135,45 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext
         )}
       </div>
 
-      {/* Media Info */}
+      {/* Media Info + Editor */}
       <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg p-4">
-        <h3 className="text-xl font-semibold text-white mb-2">{media.title}</h3>
-        <div className="flex items-center justify-between text-gray-300 text-sm">
-          <div className="flex gap-4">
-            <span>Collection: {media.collection}</span>
-            <span>Type: {media.type}</span>
-            <span>Size: {(media.size / 1024 / 1024).toFixed(1)} MB</span>
+        {!isEditing ? (
+          <>
+            <h3 className="text-xl font-semibold text-white mb-2">{media.title}</h3>
+            <div className="flex items-center justify-between text-gray-300 text-sm">
+              <div className="flex gap-4">
+                <span>Collection: {media.collection}</span>
+                <span>Type: {media.type}</span>
+                <span>Size: {(media.size / 1024 / 1024).toFixed(1)} MB</span>
+              </div>
+              <div className="flex gap-2">
+                {media.tags.map(tag => (
+                  <span key={tag} className="px-2 py-1 bg-purple-600/30 rounded-full text-xs">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Title</label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Collection</label>
+              <Input value={collection} onChange={(e) => setCollection(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Tags (comma separated)</label>
+              <Input value={tags} onChange={(e) => setTags(e.target.value)} />
+            </div>
+            <div className="md:col-span-3 flex justify-end">
+              <Button size="sm" onClick={submitEdit}>Save</Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            {media.tags.map(tag => (
-              <span key={tag} className="px-2 py-1 bg-purple-600/30 rounded-full text-xs">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
