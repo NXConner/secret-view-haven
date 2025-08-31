@@ -6,7 +6,6 @@ describe('Sidebar (app-specific)', () => {
   it('renders collections and triggers actions', () => {
     const onChange = vi.fn()
     const onUpload = vi.fn()
-    const onClear = vi.fn()
     render(
       <Sidebar
         isOpen
@@ -14,17 +13,12 @@ describe('Sidebar (app-specific)', () => {
         selectedCollection="all"
         onCollectionChange={onChange}
         onUpload={onUpload}
-        onClearWallpaper={onClear}
       />
     )
 
     // Upload button
     fireEvent.click(screen.getByText(/Upload Media/i))
     expect(onUpload).toHaveBeenCalled()
-
-    // Clear wallpaper button
-    fireEvent.click(screen.getByText(/Clear Wallpaper/i))
-    expect(onClear).toHaveBeenCalled()
 
     // Click collection
     fireEvent.click(screen.getByText('Recent'))
