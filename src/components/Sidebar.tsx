@@ -8,7 +8,6 @@ interface SidebarProps {
   selectedCollection: string;
   onCollectionChange: (collection: string) => void;
   onUpload: () => void;
-  onClearWallpaper?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
@@ -53,17 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
           <span className="font-medium">Upload Media</span>
         </button>
 
-        {/* Wallpaper Controls */}
-        {typeof props.onClearWallpaper === 'function' && (
-          <button
-            aria-label="Clear wallpaper"
-            onClick={props.onClearWallpaper}
-            className="w-full flex items-center gap-3 p-3 bg-gray-700/60 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <Trash2 size={18} />
-            <span className="font-medium">Clear Wallpaper</span>
-          </button>
-        )}
+        
 
         {/* Collections */}
         <div>
