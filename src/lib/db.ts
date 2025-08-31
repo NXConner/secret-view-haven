@@ -12,6 +12,10 @@ export interface MediaRecord {
   tags: string[]
   uploadDate: number
   size: number
+  // encryption fields (optional)
+  encIvHex?: string
+  encData?: Uint8Array
+  encMimeType?: string
 }
 
 class AppDatabase extends Dexie {

@@ -8,6 +8,9 @@ import { SearchBar } from '@/components/SearchBar';
 import { Menu, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
 import { db, type MediaRecord } from '@/lib/db'
+import { usePinLock } from '@/hooks/usePinLock'
+import PinLock from '@/components/PinLock'
+import { encryptBlob, decryptToBlob } from '@/lib/crypto'
 import WallpaperControls from '@/components/WallpaperControls';
 
 export interface MediaItem {
@@ -33,6 +36,7 @@ const Index = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [wallpaper, setWallpaper] = useState<WallpaperConfig | null>(null);
   const [showWallpaperControls, setShowWallpaperControls] = useState(false);
+  const pin = usePinLock()
 
   // Initial load: hydrate from IndexedDB; if empty, seed with mock data once
   useEffect(() => {
@@ -67,12 +71,25 @@ const Index = () => {
         const loaded = seed.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
         setMediaItems(loaded)
       } else {
-        const loaded = records.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
+        // If encrypted, attempt to decrypt only when unlocked; otherwise skip showing those items
+        const loaded: MediaItem[] = []
+        for (const r of records) {
+          try {
+            if (r.encIvHex && r.encData && r.encMimeType) {
+              if (!pin.key) continue
+              const blob = await decryptToBlob(r.encIvHex, r.encData, pin.key, r.encMimeType)
+              const url = URL.createObjectURL(blob)
+              loaded.push({ ...r, url, thumbnail: url, uploadDate: new Date(r.uploadDate) } as unknown as MediaItem)
+            } else {
+              loaded.push({ ...r, uploadDate: new Date(r.uploadDate) } as unknown as MediaItem)
+            }
+          } catch { /* ignore corrupt entries */ }
+        }
         setMediaItems(loaded)
       }
     }
     load()
-  }, [])
+  }, [pin.key])
 
   // Load wallpaper from localStorage
   useEffect(() => {
@@ -115,23 +132,52 @@ const Index = () => {
       const now = Date.now()
       const list = Array.from(files)
       const total = list.length
-      const records: MediaRecord[] = list.map((file, index) => ({
-        id: `upload-${now}-${index}`,
-        type: file.type.startsWith('video/') ? 'video' : 'image',
-        url: URL.createObjectURL(file),
-        thumbnail: URL.createObjectURL(file),
-        title: file.name,
-        collection: 'recent',
-        tags: ['uploaded'],
-        uploadDate: now,
-        size: file.size,
-      }))
-      // Simulate per-file progress for UX
-      for (let i = 0; i < records.length; i++) {
-        const rec = records[i]
-        await db.media.put(rec)
-        setUploadProgress(Math.round(((i + 1) / total) * 100))
+      const records: MediaRecord[] = []
+      for (let index = 0; index < list.length; index++) {
+        const file = list[index]
+        const id = `upload-${now}-${index}`
+        const type = file.type.startsWith('video/') ? 'video' : 'image'
+        let url = ''
+        let thumbnail = ''
+        const createUrl = () => URL.createObjectURL(file)
+        if (pin.key) {
+          const { ivHex, data, mimeType } = await encryptBlob(file, pin.key)
+          await db.media.put({
+            id,
+            type,
+            url: '',
+            thumbnail: '',
+            title: file.name,
+            collection: 'recent',
+            tags: ['uploaded'],
+            uploadDate: now,
+            size: file.size,
+            encIvHex: ivHex,
+            encData: data,
+            encMimeType: mimeType,
+          })
+          const blob = await decryptToBlob(ivHex, data, pin.key, mimeType)
+          url = URL.createObjectURL(blob)
+          thumbnail = url
+        } else {
+          url = createUrl()
+          thumbnail = createUrl()
+          await db.media.put({
+            id,
+            type,
+            url,
+            thumbnail,
+            title: file.name,
+            collection: 'recent',
+            tags: ['uploaded'],
+            uploadDate: now,
+            size: file.size,
+          })
+        }
+        records.push({ id, type, url, thumbnail, title: file.name, collection: 'recent', tags: ['uploaded'], uploadDate: now, size: file.size })
+        setUploadProgress(Math.round(((index + 1) / total) * 100))
       }
+      // Simulate per-file progress for UX
       const toItems: MediaItem[] = records.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
       setMediaItems(prev => [...toItems, ...prev])
     } finally {
@@ -158,6 +204,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen text-white relative">
+      <PinLock />
       <BackgroundWallpaper wallpaper={wallpaper} />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
