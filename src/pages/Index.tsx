@@ -204,7 +204,6 @@ const Index = () => {
     setWallpaper(config);
   };
 
-  const handleClearWallpaper = () => setWallpaper(null);
 
   return (
     <div className="min-h-screen text-white relative">
@@ -237,7 +236,6 @@ const Index = () => {
           selectedCollection={selectedCollection}
           onCollectionChange={setSelectedCollection}
           onUpload={() => { hapticImpact(); document.getElementById('file-upload')?.click() }}
-          onClearWallpaper={handleClearWallpaper}
         />
 
         {/* Main Content */}
