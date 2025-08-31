@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { buildSrcSet, responsiveSizes } from '@/lib/image';
 import { MediaItem } from '@/pages/Index';
 import { Play, Image } from 'lucide-react';
 
@@ -8,7 +9,9 @@ interface MediaGalleryProps {
   onMediaSelect: (media: MediaItem) => void;
 }
 
-export const MediaGallery: React.FC<MediaGalleryProps> = ({ mediaItems, onMediaSelect }) => {
+// using shared responsive helpers
+
+export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMediaSelect }: MediaGalleryProps) {
   if (mediaItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-gray-400">
@@ -26,15 +29,33 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({ mediaItems, onMediaS
           key={item.id}
           className="group relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
           onClick={() => onMediaSelect(item)}
+          onMouseEnter={() => { void import('@/components/MediaViewer'); }}
         >
           {/* Media Thumbnail */}
-          <img
-            src={item.thumbnail}
-            alt={item.title}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200], 'avif')}
+              sizes={responsiveSizes}
+            />
+            <source
+              type="image/webp"
+              srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200], 'webp')}
+              sizes={responsiveSizes}
+            />
+            <img
+              src={item.thumbnail}
+              srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200])}
+              sizes={responsiveSizes}
+              alt={item.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 [transition-filter]"
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              style={{ filter: 'blur(12px)' }}
+              onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.filter = 'blur(0px)'; }}
+            />
+          </picture>
           
           {/* Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -58,4 +79,4 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({ mediaItems, onMediaS
       ))}
     </div>
   );
-};
+});
