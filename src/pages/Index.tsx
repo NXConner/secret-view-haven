@@ -29,6 +29,8 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [wallpaper, setWallpaper] = useState<WallpaperConfig | null>(null);
   const [showWallpaperControls, setShowWallpaperControls] = useState(false);
 
@@ -107,9 +109,13 @@ const Index = () => {
 
   const handleFileUpload = async (files: FileList) => {
     setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
     try {
       const now = Date.now()
-      const records: MediaRecord[] = Array.from(files).map((file, index) => ({
+      const list = Array.from(files)
+      const total = list.length
+      const records: MediaRecord[] = list.map((file, index) => ({
         id: `upload-${now}-${index}`,
         type: file.type.startsWith('video/') ? 'video' : 'image',
         url: URL.createObjectURL(file),
@@ -120,11 +126,17 @@ const Index = () => {
         uploadDate: now,
         size: file.size,
       }))
-      await db.media.bulkPut(records)
+      // Simulate per-file progress for UX
+      for (let i = 0; i < records.length; i++) {
+        const rec = records[i]
+        await db.media.put(rec)
+        setUploadProgress(Math.round(((i + 1) / total) * 100))
+      }
       const toItems: MediaItem[] = records.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
       setMediaItems(prev => [...toItems, ...prev])
     } finally {
       setIsUploading(false)
+      setTimeout(() => setUploadProgress(undefined), 500)
     }
   };
 
@@ -198,7 +210,7 @@ const Index = () => {
               </div>
             )}
             {/* Upload Dropzone */}
-            <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} />
+            <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} progress={uploadProgress} error={uploadError} />
             
             {/* Media Gallery */}
             <MediaGallery
