@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Folder, Upload, Star, Clock, Settings, Shield, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'
 
 interface SidebarProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
     return collection.charAt(0).toUpperCase() + collection.slice(1);
   };
 
+  const navigate = useNavigate()
   return (
     <div
       className={`fixed left-0 top-[73px] h-[calc(100vh-73px)] bg-gray-800/95 backdrop-blur-sm border-r border-gray-700 transition-transform duration-300 z-30 ${
@@ -89,11 +91,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
             Privacy
           </h3>
           <div className="space-y-1">
-            <button className="w-full flex items-center gap-3 p-3 hover:bg-gray-700/50 rounded-lg transition-colors text-gray-300 hover:text-white">
+            <button onClick={() => navigate('/settings?tab=security')} className="w-full flex items-center gap-3 p-3 hover:bg-gray-700/50 rounded-lg transition-colors text-gray-300 hover:text-white">
               <Shield size={18} />
               <span className="font-medium">Security Settings</span>
             </button>
-            <button className="w-full flex items-center gap-3 p-3 hover:bg-gray-700/50 rounded-lg transition-colors text-gray-300 hover:text-white">
+            <button onClick={() => navigate('/settings?tab=preferences')} className="w-full flex items-center gap-3 p-3 hover:bg-gray-700/50 rounded-lg transition-colors text-gray-300 hover:text-white">
               <Settings size={18} />
               <span className="font-medium">Preferences</span>
             </button>

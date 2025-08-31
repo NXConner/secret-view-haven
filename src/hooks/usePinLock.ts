@@ -74,6 +74,15 @@ export function usePinLock() {
     setPin,
     unlock,
     lock,
+    clearPin: () => {
+      try {
+        localStorage.removeItem(SALT_KEY)
+        localStorage.removeItem(HASH_KEY)
+      } catch { /* ignore */ }
+      setHasPin(false)
+      setUnlockedKey(null)
+      setIsLocked(false)
+    },
   }
 }
 

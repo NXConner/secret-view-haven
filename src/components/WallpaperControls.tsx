@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { WallpaperConfig } from '@/components/BackgroundWallpaper';
+import { Select as BaseSelect } from '@radix-ui/react-select'
 
 interface WallpaperControlsProps {
   value: WallpaperConfig | null;
@@ -81,6 +82,32 @@ export const WallpaperControls: React.FC<WallpaperControlsProps> = ({ value, onC
             <Switch checked={value.loop ?? true} onCheckedChange={(checked) => setPartial({ loop: !!checked })} />
           </div>
         )}
+
+        <div className="w-48">
+          <label className="mb-1 block text-xs text-gray-400">Animation</label>
+          <Select value={value.animation ?? 'none'} onValueChange={(v) => setPartial({ animation: v as WallpaperConfig['animation'] })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Animation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="kenburns">Ken Burns</SelectItem>
+              <SelectItem value="float">Float</SelectItem>
+              <SelectItem value="tilt">Tilt</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grow max-w-sm">
+          <label className="mb-1 block text-xs text-gray-400">Animation Speed ({Math.round((value.animationSpeedMs ?? 20000) / 1000)}s)</label>
+          <Slider
+            value={[Math.max(5, Math.min(60, Math.round((value.animationSpeedMs ?? 20000) / 1000)))]}
+            min={5}
+            max={60}
+            step={1}
+            onValueChange={([v]) => setPartial({ animationSpeedMs: v * 1000 })}
+          />
+        </div>
       </div>
     </div>
   );
