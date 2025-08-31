@@ -11,14 +11,14 @@ interface SidebarProps {
   onClearWallpaper?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  collections,
-  selectedCollection,
-  onCollectionChange,
-  onUpload,
-  onClearWallpaper,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = (props) => {
+  const {
+    isOpen,
+    collections,
+    selectedCollection,
+    onCollectionChange,
+    onUpload,
+  } = props;
   const getCollectionIcon = (collection: string) => {
     switch (collection) {
       case 'favorites':
@@ -53,9 +53,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         {/* Wallpaper Controls */}
-        {onClearWallpaper && (
+        {typeof props.onClearWallpaper === 'function' && (
           <button
-            onClick={onClearWallpaper}
+            onClick={props.onClearWallpaper}
             className="w-full flex items-center gap-3 p-3 bg-gray-700/60 hover:bg-gray-700 rounded-lg transition-colors"
           >
             <Trash2 size={18} />
