@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import { MediaGallery } from '@/components/MediaGallery';
-import { MediaViewer } from '@/components/MediaViewer';
 import { Sidebar } from '@/components/Sidebar';
 import { UploadDropzone } from '@/components/UploadDropzone';
 import { SearchBar } from '@/components/SearchBar';
 import { Menu, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
-import WallpaperControls from '@/components/WallpaperControls';
+const MediaViewer = lazy(() => import('@/components/MediaViewer').then(m => ({ default: m.MediaViewer })));
+const WallpaperControls = lazy(() => import('@/components/WallpaperControls'));
 
 export interface MediaItem {
   id: string;
@@ -95,14 +95,16 @@ const Index = () => {
     } catch { void 0 }
   }, [wallpaper]);
 
-  const filteredMedia = mediaItems.filter(item => {
-    const matchesCollection = selectedCollection === 'all' || item.collection === selectedCollection;
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCollection && matchesSearch;
-  });
+  const filteredMedia = useMemo(() => {
+    return mediaItems.filter(item => {
+      const matchesCollection = selectedCollection === 'all' || item.collection === selectedCollection;
+      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesCollection && matchesSearch;
+    });
+  }, [mediaItems, selectedCollection, searchQuery]);
 
-  const collections = ['all', ...Array.from(new Set(mediaItems.map(item => item.collection)))];
+  const collections = useMemo(() => ['all', ...Array.from(new Set(mediaItems.map(item => item.collection)))], [mediaItems]);
 
   const handleFileUpload = (files: FileList) => {
     setIsUploading(true);
@@ -187,8 +189,10 @@ const Index = () => {
                   {showWallpaperControls ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />}
                 </button>
                 {showWallpaperControls && (
-                  <div className="mt-3">
-                    <WallpaperControls value={wallpaper} onChange={setWallpaper} />
+                  <div className="mt-3" onMouseEnter={() => { void import('@/components/WallpaperControls'); }}>
+                    <Suspense fallback={<div className="text-sm text-gray-400">Loading controls…</div>}>
+                      <WallpaperControls value={wallpaper} onChange={setWallpaper} />
+                    </Suspense>
                   </div>
                 )}
               </div>
@@ -207,21 +211,23 @@ const Index = () => {
 
       {/* Full-screen Media Viewer */}
       {selectedMedia && (
-        <MediaViewer
-          media={selectedMedia}
-          onClose={() => setSelectedMedia(null)}
-          onNext={() => {
-            const currentIndex = filteredMedia.findIndex(item => item.id === selectedMedia.id);
-            const nextIndex = (currentIndex + 1) % filteredMedia.length;
-            setSelectedMedia(filteredMedia[nextIndex]);
-          }}
-          onPrevious={() => {
-            const currentIndex = filteredMedia.findIndex(item => item.id === selectedMedia.id);
-            const prevIndex = (currentIndex - 1 + filteredMedia.length) % filteredMedia.length;
-            setSelectedMedia(filteredMedia[prevIndex]);
-          }}
-          onSetWallpaper={() => handleSetWallpaper(selectedMedia)}
-        />
+        <Suspense fallback={<div className="p-4 text-sm text-gray-400">Loading viewer…</div>}>
+          <MediaViewer
+            media={selectedMedia}
+            onClose={() => setSelectedMedia(null)}
+            onNext={() => {
+              const currentIndex = filteredMedia.findIndex(item => item.id === selectedMedia!.id);
+              const nextIndex = (currentIndex + 1) % filteredMedia.length;
+              setSelectedMedia(filteredMedia[nextIndex]);
+            }}
+            onPrevious={() => {
+              const currentIndex = filteredMedia.findIndex(item => item.id === selectedMedia!.id);
+              const prevIndex = (currentIndex - 1 + filteredMedia.length) % filteredMedia.length;
+              setSelectedMedia(filteredMedia[prevIndex]);
+            }}
+            onSetWallpaper={() => handleSetWallpaper(selectedMedia)}
+          />
+        </Suspense>
       )}
 
       {/* Hidden file input */}

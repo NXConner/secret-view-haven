@@ -41,6 +41,8 @@ export const BackgroundWallpaper: React.FC<BackgroundWallpaperProps> = ({ wallpa
           alt="Background"
           className="w-full h-full"
           style={commonStyle}
+          decoding="async"
+          fetchPriority="low"
         />
       ) : (
         <video
@@ -50,6 +52,7 @@ export const BackgroundWallpaper: React.FC<BackgroundWallpaperProps> = ({ wallpa
           autoPlay
           muted={wallpaper.muted ?? true}
           loop={wallpaper.loop ?? true}
+          preload="metadata"
           playsInline
         />
       )}
