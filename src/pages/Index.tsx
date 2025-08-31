@@ -81,7 +81,7 @@ const Index = () => {
           setWallpaper(parsed);
         }
       }
-    } catch {}
+    } catch { void 0 }
   }, []);
 
   // Persist wallpaper to localStorage
@@ -92,7 +92,7 @@ const Index = () => {
       } else {
         localStorage.removeItem('wallpaperConfig');
       }
-    } catch {}
+    } catch { void 0 }
   }, [wallpaper]);
 
   const filteredMedia = mediaItems.filter(item => {
