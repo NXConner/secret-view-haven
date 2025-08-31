@@ -7,6 +7,7 @@ import { UploadDropzone } from '@/components/UploadDropzone';
 import { SearchBar } from '@/components/SearchBar';
 import { Menu, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
+import { db, type MediaRecord } from '@/lib/db'
 import WallpaperControls from '@/components/WallpaperControls';
 
 export interface MediaItem {
@@ -31,45 +32,45 @@ const Index = () => {
   const [wallpaper, setWallpaper] = useState<WallpaperConfig | null>(null);
   const [showWallpaperControls, setShowWallpaperControls] = useState(false);
 
-  // Mock data for demo purposes
+  // Initial load: hydrate from IndexedDB; if empty, seed with mock data once
   useEffect(() => {
-    const mockData: MediaItem[] = [
-      {
-        id: '1',
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=1200&q=80',
-        thumbnail: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=400&q=80',
-        title: 'Personal Photo 1',
-        collection: 'favorites',
-        tags: ['personal', 'private'],
-        uploadDate: new Date(),
-        size: 2048000
-      },
-      {
-        id: '2',
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80',
-        thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80',
-        title: 'Personal Photo 2',
-        collection: 'recent',
-        tags: ['personal', 'work'],
-        uploadDate: new Date(),
-        size: 1536000
-      },
-      {
-        id: '3',
-        type: 'image',
-        url: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=1200&q=80',
-        thumbnail: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&fit=crop&w=400&q=80',
-        title: 'Personal Photo 3',
-        collection: 'favorites',
-        tags: ['personal', 'home'],
-        uploadDate: new Date(),
-        size: 1824000
+    const load = async () => {
+      const records = await db.media.toArray()
+      if (records.length === 0) {
+        const seed: MediaRecord[] = [
+          {
+            id: 'seed-1',
+            type: 'image',
+            url: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=1200&q=80',
+            thumbnail: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=400&q=80',
+            title: 'Personal Photo 1',
+            collection: 'favorites',
+            tags: ['personal', 'private'],
+            uploadDate: Date.now(),
+            size: 2048000,
+          },
+          {
+            id: 'seed-2',
+            type: 'image',
+            url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80',
+            thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80',
+            title: 'Personal Photo 2',
+            collection: 'recent',
+            tags: ['personal', 'work'],
+            uploadDate: Date.now(),
+            size: 1536000,
+          },
+        ]
+        await db.media.bulkPut(seed)
+        const loaded = seed.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
+        setMediaItems(loaded)
+      } else {
+        const loaded = records.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
+        setMediaItems(loaded)
       }
-    ];
-    setMediaItems(mockData);
-  }, []);
+    }
+    load()
+  }, [])
 
   // Load wallpaper from localStorage
   useEffect(() => {
@@ -104,24 +105,27 @@ const Index = () => {
 
   const collections = ['all', ...Array.from(new Set(mediaItems.map(item => item.collection)))];
 
-  const handleFileUpload = (files: FileList) => {
+  const handleFileUpload = async (files: FileList) => {
     setIsUploading(true);
-    // Simulate upload process
-    setTimeout(() => {
-      const newItems: MediaItem[] = Array.from(files).map((file, index) => ({
-        id: `upload-${Date.now()}-${index}`,
+    try {
+      const now = Date.now()
+      const records: MediaRecord[] = Array.from(files).map((file, index) => ({
+        id: `upload-${now}-${index}`,
         type: file.type.startsWith('video/') ? 'video' : 'image',
         url: URL.createObjectURL(file),
         thumbnail: URL.createObjectURL(file),
         title: file.name,
         collection: 'recent',
         tags: ['uploaded'],
-        uploadDate: new Date(),
-        size: file.size
-      }));
-      setMediaItems(prev => [...newItems, ...prev]);
-      setIsUploading(false);
-    }, 2000);
+        uploadDate: now,
+        size: file.size,
+      }))
+      await db.media.bulkPut(records)
+      const toItems: MediaItem[] = records.map(r => ({ ...r, uploadDate: new Date(r.uploadDate) })) as unknown as MediaItem[]
+      setMediaItems(prev => [...toItems, ...prev])
+    } finally {
+      setIsUploading(false)
+    }
   };
 
   const handleSetWallpaper = (media: MediaItem) => {

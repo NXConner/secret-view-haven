@@ -9,4 +9,7 @@ class ResizeObserverStub {
 // @ts-expect-error polyfill for test env
 global.ResizeObserver = ResizeObserverStub
 
+// IndexedDB polyfill for JSDOM (Dexie)
+import 'fake-indexeddb/auto'
+
 
