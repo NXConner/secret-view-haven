@@ -11,7 +11,7 @@ interface SidebarProps {
   onClearWallpaper?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = (props) => {
+export const Sidebar: React.FC<SidebarProps> = React.memo((props) => {
   const {
     isOpen,
     collections,
@@ -111,4 +111,4 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
       </div>
     </div>
   );
-};
+});

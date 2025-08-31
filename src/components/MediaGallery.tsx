@@ -8,7 +8,7 @@ interface MediaGalleryProps {
   onMediaSelect: (media: MediaItem) => void;
 }
 
-export const MediaGallery: React.FC<MediaGalleryProps> = ({ mediaItems, onMediaSelect }) => {
+export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMediaSelect }: MediaGalleryProps) {
   if (mediaItems.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-gray-400">
@@ -32,6 +32,9 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({ mediaItems, onMediaS
             src={item.thumbnail}
             alt={item.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
           />
           
           {/* Overlay */}
@@ -56,4 +59,4 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({ mediaItems, onMediaS
       ))}
     </div>
   );
-};
+});
