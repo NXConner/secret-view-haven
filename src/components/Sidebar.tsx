@@ -17,7 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedCollection,
   onCollectionChange,
   onUpload,
-  onClearWallpaper
+  onClearWallpaper: clearWallpaper,
 }) => {
   const getCollectionIcon = (collection: string) => {
     switch (collection) {
@@ -53,9 +53,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         {/* Wallpaper Controls */}
-        {onClearWallpaper && (
+        {clearWallpaper && (
           <button
-            onClick={onClearWallpaper}
+            onClick={clearWallpaper}
             className="w-full flex items-center gap-3 p-3 bg-gray-700/60 hover:bg-gray-700 rounded-lg transition-colors"
           >
             <Trash2 size={18} />
