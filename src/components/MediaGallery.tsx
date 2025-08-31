@@ -48,10 +48,12 @@ export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMed
               srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200])}
               sizes={responsiveSizes}
               alt={item.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 [transition-filter]"
               loading="lazy"
               decoding="async"
               fetchPriority="low"
+              style={{ filter: 'blur(12px)' }}
+              onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.filter = 'blur(0px)'; }}
             />
           </picture>
           
