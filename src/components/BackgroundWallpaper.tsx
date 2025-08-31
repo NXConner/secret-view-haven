@@ -11,6 +11,8 @@ export interface WallpaperConfig {
   brightness?: number; // e.g., 0.5..1.2
   muted?: boolean; // videos only
   loop?: boolean; // videos only
+  animation?: 'none' | 'kenburns' | 'float' | 'tilt';
+  animationSpeedMs?: number; // e.g., 20000
 }
 
 interface BackgroundWallpaperProps {
@@ -26,15 +28,25 @@ export const BackgroundWallpaper: React.FC<BackgroundWallpaperProps> = ({ wallpa
   const blurPx = wallpaper.blurPx ?? 0;
   const brightness = wallpaper.brightness ?? 1;
   const objectFit = wallpaper.objectFit ?? 'cover';
+  const animation = wallpaper.animation ?? 'none';
+  const animationSpeedMs = wallpaper.animationSpeedMs ?? 20000;
 
   const commonStyle: React.CSSProperties = {
     filter: `blur(${blurPx}px) brightness(${brightness})`,
     opacity,
     objectFit,
+    animation: animation !== 'none' ? `${animation} ${animationSpeedMs}ms ease-in-out infinite alternate` : undefined,
   };
 
   return (
     <div className="fixed inset-0 -z-10 pointer-events-none">
+      <style>
+        {`
+        @keyframes kenburns { 0% { transform: scale(1.05); } 100% { transform: scale(1.15); } }
+        @keyframes float { 0% { transform: translateY(-1.5%); } 100% { transform: translateY(1.5%); } }
+        @keyframes tilt { 0% { transform: rotate(-0.8deg) scale(1.05); } 100% { transform: rotate(0.8deg) scale(1.05); } }
+        `}
+      </style>
       {wallpaper.type === 'image' ? (
         <img
           src={wallpaper.url}

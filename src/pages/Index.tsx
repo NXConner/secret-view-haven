@@ -4,7 +4,7 @@ import { MediaGallery } from '@/components/MediaGallery';
 import { Sidebar } from '@/components/Sidebar';
 import { UploadDropzone } from '@/components/UploadDropzone';
 import { SearchBar } from '@/components/SearchBar';
-import { Menu, X, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Menu, X, Settings2, ChevronDown, ChevronUp, ImagePlus } from 'lucide-react';
 import BackgroundWallpaper, { WallpaperConfig } from '@/components/BackgroundWallpaper';
 const MediaViewer = lazy(() => import('@/components/MediaViewer').then(m => ({ default: m.MediaViewer })));
 const WallpaperControls = lazy(() => import('@/components/WallpaperControls'));
@@ -103,6 +103,14 @@ const Index = () => {
         }
       }
     } catch { void 0 }
+    const onUpdated = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent).detail as WallpaperConfig
+        if (detail && detail.url) setWallpaper(detail)
+      } catch { /* noop */ }
+    }
+    window.addEventListener('wallpaper:updated', onUpdated as EventListener)
+    return () => window.removeEventListener('wallpaper:updated', onUpdated as EventListener)
   }, []);
 
   // Persist wallpaper to localStorage
@@ -261,6 +269,31 @@ const Index = () => {
                 )}
               </div>
             )}
+            {/* Add Wallpaper Button */}
+            <div className="mb-4">
+              <button
+                onClick={() => document.getElementById('add-wallpaper-input')?.click()}
+                className="flex items-center gap-2 rounded-md border border-gray-700 bg-gray-800/70 px-3 py-2 hover:bg-gray-800"
+              >
+                <ImagePlus size={16} />
+                <span className="text-sm">Add Background (image/video)</span>
+              </button>
+              <input
+                id="add-wallpaper-input"
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const url = URL.createObjectURL(file)
+                  const type = file.type.startsWith('video/') ? 'video' : 'image'
+                  const next: WallpaperConfig = { type, url, objectFit: 'cover', opacity: 1, blurPx: 0, brightness: 1, muted: true, loop: true }
+                  hapticImpact();
+                  setWallpaper(next)
+                }}
+              />
+            </div>
             {/* Upload Dropzone */}
             <UploadDropzone onFileUpload={handleFileUpload} isUploading={isUploading} progress={uploadProgress} error={uploadError} />
             

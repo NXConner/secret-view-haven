@@ -8,6 +8,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import { setStatusBarDark } from '@/lib/native'
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Settings = lazy(() => import('./pages/Settings'));
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => {
           <Suspense fallback={<div className="p-4 text-sm text-gray-400">Loading…</div>}>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
