@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { buildSrcSet, responsiveSizes } from '@/lib/image';
 import { MediaItem } from '@/pages/Index';
 import { Play, Image } from 'lucide-react';
 
@@ -8,27 +9,7 @@ interface MediaGalleryProps {
   onMediaSelect: (media: MediaItem) => void;
 }
 
-function setOrAppendParam(url: string, key: string, value: string | number) {
-  const hasQuery = url.includes('?');
-  const pattern = new RegExp(`([?&])${key}=[^&]*`);
-  if (pattern.test(url)) {
-    return url.replace(pattern, `$1${key}=${value}`);
-  }
-  return url + (hasQuery ? `&${key}=${value}` : `?${key}=${value}`);
-}
-
-function buildSrcSet(baseUrl: string, widths: number[], format?: 'webp' | 'avif') {
-  const entries = widths.map((w) => {
-    let u = setOrAppendParam(baseUrl, 'w', w);
-    if (format) {
-      u = setOrAppendParam(u, 'fm', format);
-    }
-    return `${u} ${w}w`;
-  });
-  return entries.join(', ');
-}
-
-const responsiveSizes = "(min-width: 1536px) 16.66vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw";
+// using shared responsive helpers
 
 export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMediaSelect }: MediaGalleryProps) {
   if (mediaItems.length === 0) {

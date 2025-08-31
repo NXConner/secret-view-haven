@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { buildSrcSet } from '@/lib/image';
 import { MediaItem } from '@/pages/Index';
 import { X, ChevronLeft, ChevronRight, Download, Share, Heart, Image } from 'lucide-react';
 
@@ -82,16 +83,23 @@ export const MediaViewer: React.FC<MediaViewerProps> = ({ media, onClose, onNext
       {/* Media Content */}
       <div className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
         {media.type === 'image' ? (
-          <img
-            src={media.url}
-            alt={media.title}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-          />
+          <picture>
+            <source type="image/avif" srcSet={buildSrcSet(media.url, [800, 1200, 1600, 2400], 'avif')} />
+            <source type="image/webp" srcSet={buildSrcSet(media.url, [800, 1200, 1600, 2400], 'webp')} />
+            <img
+              src={media.url}
+              srcSet={buildSrcSet(media.url, [800, 1200, 1600, 2400])}
+              alt={media.title}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              decoding="async"
+            />
+          </picture>
         ) : (
           <video
             src={media.url}
             controls
             autoPlay
+            preload="metadata"
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
           />
         )}
