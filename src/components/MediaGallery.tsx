@@ -8,6 +8,28 @@ interface MediaGalleryProps {
   onMediaSelect: (media: MediaItem) => void;
 }
 
+function setOrAppendParam(url: string, key: string, value: string | number) {
+  const hasQuery = url.includes('?');
+  const pattern = new RegExp(`([?&])${key}=[^&]*`);
+  if (pattern.test(url)) {
+    return url.replace(pattern, `$1${key}=${value}`);
+  }
+  return url + (hasQuery ? `&${key}=${value}` : `?${key}=${value}`);
+}
+
+function buildSrcSet(baseUrl: string, widths: number[], format?: 'webp' | 'avif') {
+  const entries = widths.map((w) => {
+    let u = setOrAppendParam(baseUrl, 'w', w);
+    if (format) {
+      u = setOrAppendParam(u, 'fm', format);
+    }
+    return `${u} ${w}w`;
+  });
+  return entries.join(', ');
+}
+
+const responsiveSizes = "(min-width: 1536px) 16.66vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw";
+
 export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMediaSelect }: MediaGalleryProps) {
   if (mediaItems.length === 0) {
     return (
@@ -26,16 +48,31 @@ export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMed
           key={item.id}
           className="group relative aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
           onClick={() => onMediaSelect(item)}
+          onMouseEnter={() => { void import('@/components/MediaViewer'); }}
         >
           {/* Media Thumbnail */}
-          <img
-            src={item.thumbnail}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            loading="lazy"
-            decoding="async"
-            fetchPriority="low"
-          />
+          <picture>
+            <source
+              type="image/avif"
+              srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200], 'avif')}
+              sizes={responsiveSizes}
+            />
+            <source
+              type="image/webp"
+              srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200], 'webp')}
+              sizes={responsiveSizes}
+            />
+            <img
+              src={item.thumbnail}
+              srcSet={buildSrcSet(item.thumbnail, [200, 400, 800, 1200])}
+              sizes={responsiveSizes}
+              alt={item.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+            />
+          </picture>
           
           {/* Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

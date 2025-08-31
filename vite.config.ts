@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { visualizer } from 'rollup-plugin-visualizer';
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
@@ -13,6 +14,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
+    mode === 'analyze' && visualizer({ filename: 'dist/stats.html', gzipSize: true, brotliSize: true, open: false })
   ].filter(Boolean),
   build: {
     rollupOptions: {

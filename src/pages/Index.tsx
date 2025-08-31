@@ -189,7 +189,7 @@ const Index = () => {
                   {showWallpaperControls ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />}
                 </button>
                 {showWallpaperControls && (
-                  <div className="mt-3">
+                  <div className="mt-3" onMouseEnter={() => { void import('@/components/WallpaperControls'); }}>
                     <Suspense fallback={<div className="text-sm text-gray-400">Loading controls…</div>}>
                       <WallpaperControls value={wallpaper} onChange={setWallpaper} />
                     </Suspense>
