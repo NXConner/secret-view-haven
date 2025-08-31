@@ -51,7 +51,9 @@ export const MediaGallery = React.memo(function MediaGallery({ mediaItems, onMed
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 [transition-filter]"
               loading="lazy"
               decoding="async"
-              fetchPriority="low"
+              // React warns on non-standard prop casing; use lowercase attribute
+              // @ts-expect-error React DOM attribute casing workaround
+              fetchpriority="low"
               style={{ filter: 'blur(12px)' }}
               onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.filter = 'blur(0px)'; }}
             />
